@@ -1,5 +1,6 @@
 const bcrypt = require("bcrypt");
 const User = require("../Models/user.model");
+const jwt = require("jsonwebtoken");
 
 // Create a new user
 exports.createUser = async (req, res) => {
@@ -98,14 +99,18 @@ exports.loginUser = async (req, res) => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    // You can generate and return a JWT token here if you want to implement authentication
+    // Generate a JWT token
+    const token = jwt.sign({ userId: user._id }, process.env.SECRET_CODE, {
+      expiresIn: "1h", // Set the expiration time for the token
+    });
 
-    res.status(200).json({ message: "Login successful", user });
+    res.status(200).json({ message: "Login successful", token });
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
 
 // Update user information (member)
 exports.updateUserInformation = async (req, res) => {
