@@ -11,6 +11,7 @@ const depositRoutes = require("./Routes/DepositRoutes");
 const eventRoutes = require("./Routes/EventRoutes");
 const incomeRoutes = require("./Routes/IncomeRoutes");
 const sponsoringRoutes = require("./Routes/SponsoringRoutes");
+const TaskRoutes = require("./Routes/TaskRoutes");
 
 const app =express()
 const port = process.env.PORT;
@@ -35,6 +36,7 @@ app.use("/deposits", depositRoutes);//-----> wa4e7
 app.use("/events", eventRoutes);//-----> wa4e7
 app.use("/incomes", incomeRoutes);//-----> wa4e7
 app.use("/sponsorings", sponsoringRoutes);//-----> wa4e7
+app.use("/tasks", TaskRoutes);//-----> wa4e7
 
 app.use('/',userrouter);
 

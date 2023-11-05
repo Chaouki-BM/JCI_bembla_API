@@ -2,10 +2,10 @@ const Event = require("../Models/Event.model");
 
 // Create a new event
 exports.createEvent = async (req, res) => {
-  const { Responsible, title, Description, Picture, committee } = req.body;
+  const { Responsible, title, Description } = req.body;
 
   try {
-    const event = await Event.create({ Responsible, title, Description, Picture, committee });
+    const event = await Event.create({ Responsible, title, Description });
     res.status(201).json({ event });
   } catch (error) {
     console.log(error);
@@ -16,7 +16,7 @@ exports.createEvent = async (req, res) => {
 // Get all events
 exports.getAllEvents = async (req, res) => {
   try {
-    const events = await Event.find().populate('committee');
+    const events = await Event.find();
     res.status(200).json({ events });
   } catch (error) {
     console.log(error);
@@ -29,7 +29,7 @@ exports.getEventById = async (req, res) => {
   const { id } = req.params;
 
   try {
-    const event = await Event.findById(id).populate('committee');
+    const event = await Event.findById(id);
     if (!event) {
       return res.status(404).json({ message: "Event not found" });
     }
@@ -43,14 +43,14 @@ exports.getEventById = async (req, res) => {
 // Update an event by ID
 exports.updateEventById = async (req, res) => {
   const { id } = req.params;
-  const { Responsible, title, Description, Picture, committee } = req.body;
+  const { Responsible, title, Description} = req.body;
 
   try {
     const event = await Event.findByIdAndUpdate(
       id,
-      { Responsible, title, Description, Picture, committee },
+      { Responsible, title, Description},
       { new: true }
-    ).populate('committee');
+    );
     if (!event) {
       return res.status(404).json({ message: "Event not found" });
     }

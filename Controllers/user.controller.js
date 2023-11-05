@@ -39,6 +39,7 @@ if(user){
 
     }
 }
+
 const add_membre= async(req,res)=>{
     try{
 let {Email,Password, }=req.body
@@ -95,6 +96,7 @@ if(office){
         
         }
 }
+
 const delete_membre= async( req,res)=>{
     try{
         let { Email } = req.body

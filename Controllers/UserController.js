@@ -2,10 +2,40 @@ const bcrypt = require("bcrypt");
 const User = require("../Models/user.model");
 const jwt = require("jsonwebtoken");
 
-// Create a new user
-exports.createUser = async (req, res) => {
-  const { Email, Password, FullName, DateN, DateI, cin, role } = req.body;
+// // Create a new user
+// exports.createUser = async (req, res) => {
+//   const { Email, FullName, DateN, DateI, cin, role } = req.body;
+//   const Password = "" //generate password with generate-password package
+//   try {
+//     const existingUser = await User.findOne({ Email });
+//     if (existingUser)
+//       return res.status(400).json({ message: "User already exists." });
+//     const result = await User.create({
+//       Email,
+//       Password,
+//       FullName,
+//       DateI,
+//       DateN,
+//       cin,
+//       role,
+//     });
+//     // sent email with credential to the newly created user with nodemailler package
+//     res.status(200).json({ result });
+//   } catch (error) {
+//     console.log(error);
+//     res.status(500).json({ message: "Internal server error" });
+//   }
+// };
 
+exports.createUser = async (req, res) => {
+  const { Email, FullName, DateN, DateI, cin, role } = req.body;
+  const Password = require("generate-password").generate({
+    length: 10,
+    numbers: true,
+    symbols: true,
+    uppercase: true,
+    lowercase: true,
+  });
   try {
     const existingUser = await User.findOne({ Email });
     if (existingUser)
@@ -19,12 +49,45 @@ exports.createUser = async (req, res) => {
       cin,
       role,
     });
-    res.status(200).json({ result });
+    const transporter = require("nodemailer").createTransport({
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false,
+      auth: {
+        user: "your_email@example.com", /////////--------------------------------- email
+        pass: "your_password", /////////--------------------------------- password  mtt3333 l account
+      },
+    });
+    const mailOptions = {
+      from: '"JCI BEMBLA" <your_email@example.com>', // adress elli bch tab3th baha
+      to: Email, // receiver address
+      subject: "Welcome to our app", // sujet
+      text: `Hello ${FullName},\n\nYour account has been created successfully.\n\nYour email: ${Email}\nYour password: ${Password}\n\nPlease change your password after logging in.\n\nThank you for choosing our app.`, // plain text body
+    };
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        // if the mail doesn't send
+        console.log(error);
+        res.status(500).json({ message: "Failed to send email" });
+      } else {
+        // check if the mail is valid
+        if (info.accepted.length > 0 && info.rejected.length === 0) {
+          // the mail is valid and accepted by the receiver
+          console.log("Email sent: " + info.response);
+          res.status(200).json({ result });
+        } else {
+          // the mail is invalid or rejected by the receiver
+          console.log("Email rejected: " + info.response);
+          res.status(400).json({ message: "Invalid or rejected email" });
+        }
+      }
+    });
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
 
 // Get all users
 exports.getAllUsers = async (req, res) => {
