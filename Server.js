@@ -12,6 +12,9 @@ const eventRoutes = require("./Routes/EventRoutes");
 const incomeRoutes = require("./Routes/IncomeRoutes");
 const sponsoringRoutes = require("./Routes/SponsoringRoutes");
 const TaskRoutes = require("./Routes/TaskRoutes");
+const MeetRoutes = require("./Routes/MeetRoutes");
+const ResponsableRoutes = require("./Routes/ResponsableRoutes");
+const PresenceRoutes = require("./Routes/PresenceRoutes");
 
 const app =express()
 const port = process.env.PORT;
@@ -37,6 +40,9 @@ app.use("/events", eventRoutes);//-----> wa4e7
 app.use("/incomes", incomeRoutes);//-----> wa4e7
 app.use("/sponsorings", sponsoringRoutes);//-----> wa4e7
 app.use("/tasks", TaskRoutes);//-----> wa4e7
+app.use("/meet", MeetRoutes);
+app.use("/responsable", ResponsableRoutes);
+app.use("/presence", PresenceRoutes);
 
 app.use('/',userrouter);
 

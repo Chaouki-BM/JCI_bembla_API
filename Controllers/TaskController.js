@@ -1,5 +1,5 @@
 const express = require("express");
-const Task = require("../models/Task.model"); // Importing your Task model
+const Task = require("../Models/Task.model"); // Importing your Task model
 
 // Controller for handling different CRUD operations for Tasks
 exports.taskController = {
