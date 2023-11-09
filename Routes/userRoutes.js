@@ -29,5 +29,10 @@ router.post("/login", UserController.loginUser);
 // Update user information (member)
 router.put("/users/:id", UserController.updateUserInformation);
 
+//----------------- update pass
+router.put("/passwordUpdate", UserController.updatePassword);
+
+// reset password ------------------------------------------------- 
+router.post("/resetPassword", UserController.resetPasswordByEmail);
 
 module.exports = router;

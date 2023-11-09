@@ -223,3 +223,100 @@ exports.createUsers = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+exports.resetPasswordByEmail = async (req, res) => {
+  const { email } = req.body;
+  try {
+    const user = await User.findOne({ email });
+    // check if the user exists
+    if (user) {
+      // generate a random password 
+      const newPassword = generatePassword.generate({
+        length: 10,
+        numbers: true,
+        symbols: true,
+        uppercase: true,
+        lowercase: true,
+      });
+      // update the user's password with the new one
+      user.password = newPassword;
+      await user.save();
+      const transporter = nodemailer.createTransport({
+        host: "smtp.gmail.com",
+        port: 587,
+        secure: false, // true for 465, false for other ports
+        auth: {
+          user: "your_email@gmail.com", // your gmail account
+          pass: "your_password", // your gmail password
+        },
+      });
+      // create an email options object with the user's email, subject, and text
+      const mailOptions = {
+        from: "your_email@gmail.com", // your gmail account
+        to: user.email, // the user's email
+        subject: "Password Reset", // the email subject
+        text: `Your password has been reset. Your new password is ${newPassword}. Please log in and change your password as soon as possible.`, // the email text
+      };
+      // send the email using the transporter and the mail options
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          // handle the error and send a failure response
+          console.log(error);
+          res.status(500).json({ message: "Failed to send email" });
+        } else {
+          // send a success response with the user and the email info
+          res.status(200).json({
+            message: "Password reset successfully and email sent",
+            user,
+            info,
+          });
+        }
+      });
+    } else {
+      // send a not found response
+      res.status(404).json({ message: "User not found" });
+    }
+  } catch (error) {
+    // handle the error and send a failure response
+    console.log(error);
+    res.status(500).json({ message: "Failed to reset password" });
+  }
+};
+
+
+exports.updatePassword = async (req, res) => {
+  // get the email, old password, and new password from the request body
+  const { email, oldPassword, newPassword } = req.body;
+  try {
+    // find the user by email from the database using the User model
+    const user = await User.findOne({ email });
+    // check if the user exists
+    if (user) {
+      // compare the old password with the user's hashed password using bcrypt
+      const match = await bcrypt.compare(oldPassword, user.password);
+      // check if the passwords match
+      if (match) {
+        // hash the new password using bcrypt
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        // update the user's password with the hashed password
+        user.password = hashedPassword;
+        // save the user to the database
+        await user.save();
+        // send a success response with the user
+        res
+          .status(200)
+          .json({ message: "Password updated successfully", user });
+      } else {
+        // send a bad request response
+        res.status(400).json({ message: "Old password is incorrect" });
+      }
+    } else {
+      // send a not found response
+      res.status(404).json({ message: "User not found" });
+    }
+  } catch (error) {
+    // handle the error and send a failure response
+    console.log(error);
+    res.status(500).json({ message: "Failed to update password" });
+  }
+};
