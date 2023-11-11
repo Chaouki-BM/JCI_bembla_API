@@ -29,37 +29,42 @@ const jwt = require("jsonwebtoken");
 
 exports.createUser = async (req, res) => {
   const { Email, FullName, DateN, DateI, cin, role } = req.body;
-  const Password = require("generate-password").generate({
+  const Password = await require("generate-password").generate({
     length: 10,
     numbers: true,
     symbols: true,
     uppercase: true,
     lowercase: true,
   });
+
   try {
     const existingUser = await User.findOne({ Email });
     if (existingUser)
       return res.status(400).json({ message: "User already exists." });
-    const result = await User.create({
-      Email,
-      Password,
-      FullName,
-      DateI,
-      DateN,
-      cin,
-      role,
-    });
+
+    const HashedPassword = await bcrypt.hash(Password, 10);
+    console.log("------------------------->",Password);
+     const result = await User.create({
+       Email,
+       Password: HashedPassword,
+       FullName,
+       DateI,
+       DateN,
+       cin,
+       role,
+     });
+
     const transporter = require("nodemailer").createTransport({
       host: "smtp.gmail.com",
       port: 587,
       secure: false,
       auth: {
-        user: "your_email@example.com", /////////--------------------------------- email
-        pass: "your_password", /////////--------------------------------- password  mtt3333 l account
+        user: 'mygcord@gmail.com', /////////--------------------------------- email
+        pass: 'ahiuapmxrcniiqbh', /////////--------------------------------- password  mtt3333 l account
       },
     });
     const mailOptions = {
-      from: '"JCI BEMBLA" <your_email@example.com>', // adress elli bch tab3th baha
+      from: '"JCI BEMBLA" mygcord@gmail.com', // adress elli bch tab3th baha
       to: Email, // receiver address
       subject: "Welcome to our app", // sujet
       text: `Hello ${FullName},\n\nYour account has been created successfully.\n\nYour email: ${Email}\nYour password: ${Password}\n\nPlease change your password after logging in.\n\nThank you for choosing our app.`, // plain text body
@@ -156,8 +161,10 @@ exports.loginUser = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-
+    console.log("--------------->",user.Password);
+    console.log("--------------->",Password);
     const isPasswordValid = await bcrypt.compare(Password, user.Password);
+    console.log(isPasswordValid);
     if (!isPasswordValid) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
@@ -177,8 +184,8 @@ exports.loginUser = async (req, res) => {
 
 // Update user information (member)
 exports.updateUserInformation = async (req, res) => {
-  const userId = req.userId; // Assuming the user's ID is extracted from the authenticated request
-  const { FullName, DateOfBirth, CIN } = req.body;
+  const {userId} = req.params; // Assuming the user's ID is extracted from the authenticated request
+  const { FullName, DateOfBirth, cin , role } = req.body;
 
   try {
     // Find the user by ID
@@ -190,7 +197,8 @@ exports.updateUserInformation = async (req, res) => {
     // Update the user information
     user.FullName = FullName;
     user.DateOfBirth = DateOfBirth;
-    user.CIN = CIN;
+    user.cin = cin;
+    user.role = role;
 
     // Save the updated user
     const updatedUser = await user.save();
@@ -225,35 +233,38 @@ exports.createUsers = async (req, res) => {
 };
 
 exports.resetPasswordByEmail = async (req, res) => {
-  const { email } = req.body;
+  const { Email } = req.body;
   try {
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ Email });
     // check if the user exists
     if (user) {
       // generate a random password 
-      const newPassword = generatePassword.generate({
+      const newPassword = require("generate-password").generate({
         length: 10,
         numbers: true,
         symbols: true,
         uppercase: true,
         lowercase: true,
       });
+      
+      const HashedPassword = await bcrypt.hash(newPassword, 10);
       // update the user's password with the new one
-      user.password = newPassword;
+      console.log("the new password ----------> " , newPassword);
+      user.Password = HashedPassword;
       await user.save();
-      const transporter = nodemailer.createTransport({
+      const transporter = require("nodemailer").createTransport({
         host: "smtp.gmail.com",
         port: 587,
-        secure: false, // true for 465, false for other ports
+        secure: false,
         auth: {
-          user: "your_email@gmail.com", // your gmail account
-          pass: "your_password", // your gmail password
+          user: "mygcord@gmail.com", /////////--------------------------------- email
+          pass: "ahiuapmxrcniiqbh", /////////--------------------------------- password  mtt3333 l account
         },
       });
       // create an email options object with the user's email, subject, and text
       const mailOptions = {
-        from: "your_email@gmail.com", // your gmail account
-        to: user.email, // the user's email
+        from: "mygcord@gmail.com", // your gmail account
+        to: user.Email, // the user's email
         subject: "Password Reset", // the email subject
         text: `Your password has been reset. Your new password is ${newPassword}. Please log in and change your password as soon as possible.`, // the email text
       };
@@ -286,26 +297,33 @@ exports.resetPasswordByEmail = async (req, res) => {
 
 exports.updatePassword = async (req, res) => {
   // get the email, old password, and new password from the request body
-  const { email, oldPassword, newPassword } = req.body;
+  const { Email, oldPassword, newPassword } = req.body;
   try {
     // find the user by email from the database using the User model
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ Email });
     // check if the user exists
     if (user) {
       // compare the old password with the user's hashed password using bcrypt
-      const match = await bcrypt.compare(oldPassword, user.password);
+      const match = await bcrypt.compare(oldPassword, user.Password);
       // check if the passwords match
       if (match) {
         // hash the new password using bcrypt
         const hashedPassword = await bcrypt.hash(newPassword, 10);
         // update the user's password with the hashed password
-        user.password = hashedPassword;
+        user.Password = hashedPassword;
         // save the user to the database
         await user.save();
+         const token = jwt.sign(
+           { role: user.role, Email: user.Email, FullName: user.FullName },
+           process.env.SECRET_CODE,
+           {
+             expiresIn: "1h", // Set the expiration time for the token
+           }
+         );
         // send a success response with the user
         res
           .status(200)
-          .json({ message: "Password updated successfully", user });
+          .json({ message: "Password updated successfully", user, token });
       } else {
         // send a bad request response
         res.status(400).json({ message: "Old password is incorrect" });

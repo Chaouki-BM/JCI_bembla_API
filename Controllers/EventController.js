@@ -1,5 +1,5 @@
 const Event = require("../Models/Event.model");
-
+const Task = require("../Models/Task.model")
 // Create a new event
 exports.createEvent = async (req, res) => {
   const { Responsible, title, Description } = req.body;
@@ -62,15 +62,33 @@ exports.updateEventById = async (req, res) => {
 };
 
 // Delete an event by ID
+// exports.deleteEventById = async (req, res) => {
+//   const { id } = req.params;
+
+//   try {
+//     const event = await Event.findByIdAndDelete(id);
+//     if (!event) {
+//       return res.status(404).json({ message: "Event not found" });
+//     }
+//     res.status(200).json({ message: "Event deleted successfully" });
+//   } catch (error) {
+//     console.log(error);
+//     res.status(500).json({ message: "Internal server error" });
+//   }
+// };
+
+
+// Delete an event by ID
 exports.deleteEventById = async (req, res) => {
   const { id } = req.params;
 
   try {
+    await Task.deleteMany({ EventId: id });
     const event = await Event.findByIdAndDelete(id);
     if (!event) {
       return res.status(404).json({ message: "Event not found" });
     }
-    res.status(200).json({ message: "Event deleted successfully" });
+    res.status(200).json({ message: "Event and related tasks deleted successfully" });
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: "Internal server error" });
